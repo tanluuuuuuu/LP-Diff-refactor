@@ -19,15 +19,14 @@ class LRHRDataset(Dataset):
         self.files_lr = os.path.join(opt['dataroot'], phase, 'inputs')
         self.files_hr = os.path.join(opt['dataroot'], phase, 'gt')
         
-        lr_folders = os.listdir(self.files_lr)
+        lr_folders = [f for f in os.listdir(self.files_lr) if not f.startswith('.')]
         self.lr = []
         self.hr = []
         
         for folder in lr_folders:
             self.lr.append(sorted(glob(os.path.join(self.files_lr, folder, '*.jpg')), key=self.extract_number))
             self.hr.extend(glob(os.path.join(self.files_hr, folder, '*.jpg')))
-            
-            
+        
         assert len(self.lr) == len(self.hr)
 
         # if self.opt.mode == 'train':
@@ -40,7 +39,7 @@ class LRHRDataset(Dataset):
         logger.info(f'Dataset has been created with {len(self.lr)} samples')
         
     def extract_number(self, file_path):
-        match = re.search(r'img_(\d+).jpg', os.path.basename(file_path))
+        match = re.search(r'[a-z]+-(\d+)\.jpg', os.path.basename(file_path))
         if match:
             return int(match.group(1))
         else:
