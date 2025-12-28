@@ -85,3 +85,6 @@ dmypy.json
 
 # Ruff
 .ruff_cache/
+
+./data/ICPR_train
+/data_*
