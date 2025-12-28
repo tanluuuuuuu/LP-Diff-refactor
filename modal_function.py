@@ -7,7 +7,7 @@ app = modal.App("lp-diff-training")
 # Create volumes for data and checkpoints
 data_volume = modal.Volume.from_name("icpr2026-data", create_if_missing=True)
 checkpoint_volume = modal.Volume.from_name(
-    "icpr2026", create_if_missing=True)
+    "icpr2026-checkpoint-112x56", create_if_missing=True)
 
 # Define the image with all dependencies
 # image = (
@@ -48,7 +48,7 @@ pytorch_image = modal.Image.from_registry("pytorch/pytorch").apt_install(
 
 @app.function(
     image=pytorch_image,
-    gpu="A100",  # or "A10G", "T4", "L4", etc.
+    gpu="T4",  # or "A10G", "T4", "L4", etc.
     volumes={
         "/mnt/icpr2026": data_volume,
         "/root/checkpoints": checkpoint_volume,
@@ -80,8 +80,8 @@ def train_model():
     sys.path.insert(0, lp_diff_path)
 
     # Unzip data if not already extracted
-    data_zip = "/mnt/icpr2026/data_converted_1000.zip"
-    data_dir = "/mnt/icpr2026/data_converted_1000"
+    data_zip = "/mnt/icpr2026/data_converted_1000_112x56.zip"
+    data_dir = "/mnt/icpr2026/data_converted_1000_112x56"
 
     if os.path.exists(data_zip) and not os.path.exists(data_dir):
         print(f"Unzipping {data_zip}...")
@@ -112,26 +112,26 @@ def train_model():
         "path": {
             "log": "/root/checkpoints/logs",
             "results": "/root/checkpoints/results",
-            "checkpoint": "/root/checkpoints/checkpoints",
+            "checkpoint": "/root/checkpoints",
             "resume_state": "/root/checkpoints/checkpoints/I10800_E153",
         },
         "datasets": {
             "train": {
                 "name": "ICPR",
                 "mode": "LRHR",
-                "dataroot": "/mnt/icpr2026/data_converted_1000",
-                "width": 224,
-                "height": 112,
-                "batch_size": 40,
+                "dataroot": "/mnt/icpr2026/data_converted_1000_112x56",
+                "width": 112,
+                "height": 56,
+                "batch_size": 20,
                 "num_workers": 0,
                 "use_shuffle": True,
             },
             "val": {
                 "name": "ICPR",
                 "mode": "LRHR",
-                "dataroot": "/mnt/icpr2026/data_converted_1000",
-                "width": 224,
-                "height": 112,
+                "dataroot": "/mnt/icpr2026/data_converted_1000_112x56",
+                "width": 112,
+                "height": 56,
                 "batch_size": 1,
                 "num_workers": 1,
                 "use_shuffle": False,
@@ -143,16 +143,14 @@ def train_model():
             "unet": {
                 "in_channel": 6,
                 "out_channel": 3,
-                "inner_channel": 64,
+                "inner_channel": 32,
                 "channel_multiplier": [
                     1,
                     2,
                     4,
-                    8,
-                    8
                 ],
                 "attn_res": [
-                    16
+                    4
                 ],
                 "res_blocks": 2,
                 "dropout": 0.1
@@ -179,7 +177,7 @@ def train_model():
         },
         "train": {
             "use_prerain_MTA": False,
-            "resume_training": True,
+            "resume_training": False,
             "MTA": "./best_377.pt",
             "n_iter": 1000000,
             "val_freq": 1000001,

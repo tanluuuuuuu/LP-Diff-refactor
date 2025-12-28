@@ -277,15 +277,10 @@ class UNet(nn.Module):
 
         for layer in self.ups:
             try:
-                print(f"[BEFORE] X input shape: {x.shape}")
-                print(f"[BEFORE] Feat input shape: {feats[-1].shape}")
-
                 if isinstance(layer, ResnetBlocWithAttn):
                     x = layer(torch.cat((x, feats.pop()), dim=1), t)
                 else:
                     x = layer(x)
-
-                print(f"[AFTER] X input shape: {x.shape}\n")
             except:
                 breakpoint()
 
